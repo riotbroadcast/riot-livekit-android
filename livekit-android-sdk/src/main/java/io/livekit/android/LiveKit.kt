@@ -45,6 +45,8 @@ class LiveKit {
             val room = component.roomFactory()
                 .create(ctx)
             room.listener = listener
+            if(room.state == Room.State.CONNECTED)
+                return room
             room.connect(url, token, options)
 
             return room

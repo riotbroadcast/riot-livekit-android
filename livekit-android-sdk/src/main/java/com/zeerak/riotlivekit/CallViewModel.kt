@@ -30,8 +30,8 @@ class CallViewModel(
     private val mutableRemoteParticipants = MutableLiveData<List<RemoteParticipant>>()
     val remoteParticipants: LiveData<List<RemoteParticipant>> = mutableRemoteParticipants
 
-    var audioTrack : LocalAudioTrack? = null
-    var videoTrack : LocalVideoTrack? = null
+    var audioTrack: LocalAudioTrack? = null
+    var videoTrack: LocalVideoTrack? = null
 
 
     init {
@@ -46,19 +46,18 @@ class CallViewModel(
                     this@CallViewModel
                 )
 
-                if (!Constants.isListener) {
-                    val localParticipant = room.localParticipant
-                     audioTrack = localParticipant.createAudioTrack()
-                     videoTrack = localParticipant.createVideoTrack()
-                    audioTrack?.enabled = true
-                    localParticipant.publishAudioTrack(audioTrack!!)
-                    if (enableVideoBroadcast) {
-                        videoTrack?.enabled = true
-                        localParticipant.publishVideoTrack(videoTrack!!)
-                        videoTrack?.startCapture()
 
-                    }
+                val localParticipant = room.localParticipant
+                audioTrack = localParticipant.createAudioTrack()
+                videoTrack = localParticipant.createVideoTrack()
+                audioTrack?.enabled = true
+                localParticipant.publishAudioTrack(audioTrack!!)
+                if (enableVideoBroadcast) {
+                    videoTrack?.enabled = true
+                    localParticipant.publishVideoTrack(videoTrack!!)
+                    videoTrack?.startCapture()
                 }
+
 
                 updateParticipants(room)
                 mutableRoom.value = room

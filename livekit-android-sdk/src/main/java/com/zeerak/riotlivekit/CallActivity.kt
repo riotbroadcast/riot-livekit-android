@@ -32,7 +32,7 @@ class CallActivity : AppCompatActivity() {
 
     private var previousSpeakerphoneOn = true
     private var previousMicrophoneMute = false
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -43,8 +43,8 @@ class CallActivity : AppCompatActivity() {
 
         binding.seekbarDelay.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if(fromUser){
-                    binding.tvValueDelay.text = "${progress/1000f} sec"
+                if (fromUser) {
+                    binding.tvValueDelay.text = "${progress / 1000f} sec"
                     audioDelayViewModel.onSeekBarChanged(seekBar!!, progress, fromUser)
                 }
 
@@ -56,16 +56,16 @@ class CallActivity : AppCompatActivity() {
 
         })
 
-        if(Constants.isListener){
+        if (IS_DELAY_ON) {
             binding.constraintLayout.visibility = View.VISIBLE
             binding.videoButton.visibility = View.GONE
             binding.micButton.visibility = View.GONE
-        }else{
+        } else {
             binding.constraintLayout.visibility = View.GONE
             binding.micButton.visibility = View.VISIBLE
-            if(Constants.enableVideoBroadcast){
+            if (Constants.enableVideoBroadcast) {
                 binding.videoButton.visibility = View.VISIBLE
-            }else{
+            } else {
                 binding.videoButton.visibility = View.GONE
 
             }
@@ -73,11 +73,11 @@ class CallActivity : AppCompatActivity() {
 
 
         binding.micButton.setOnClickListener {
-            if(binding.micButton.tag == "enabled"){
+            if (binding.micButton.tag == "enabled") {
                 binding.micButton.tag = "disabled"
                 binding.micButton.setImageResource(R.drawable.ic_round_mic_off_24)
                 viewModel.audioTrack?.enabled = false
-            }else{
+            } else {
                 binding.micButton.tag = "enabled"
                 binding.micButton.setImageResource(R.drawable.ic_round_mic_24)
                 viewModel.audioTrack?.enabled = true
@@ -85,11 +85,11 @@ class CallActivity : AppCompatActivity() {
         }
 
         binding.videoButton.setOnClickListener {
-            if(binding.videoButton.tag == "enabled"){
+            if (binding.videoButton.tag == "enabled") {
                 binding.videoButton.tag = "disabled"
                 binding.videoButton.setImageResource(R.drawable.ic_round_videocam_off_24)
                 viewModel.videoTrack?.enabled = false
-            }else{
+            } else {
                 binding.videoButton.tag = "enabled"
                 binding.videoButton.setImageResource(R.drawable.ic_round_videocam_24)
                 viewModel.videoTrack?.enabled = true
@@ -124,7 +124,8 @@ class CallActivity : AppCompatActivity() {
 
         viewModel.room.observe(this) { room ->
             room.initVideoRenderer(binding.pipVideoView)
-            val videoTrack = room.localParticipant.videoTracks.values.firstOrNull()?.track as? LocalVideoTrack
+            val videoTrack =
+                room.localParticipant.videoTracks.values.firstOrNull()?.track as? LocalVideoTrack
 
             videoTrack?.addRenderer(binding.pipVideoView)
         }
@@ -144,9 +145,9 @@ class CallActivity : AppCompatActivity() {
             AudioManager.AUDIOFOCUS_GAIN,
         )
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            Log.v ("LIVEKIT", "Audio focus request granted for VOICE_CALL streams")
+            Log.v("LIVEKIT", "Audio focus request granted for VOICE_CALL streams")
         } else {
-            Log.v ("LIVEKIT", "Audio focus request failed" )
+            Log.v("LIVEKIT", "Audio focus request failed")
         }
     }
 
