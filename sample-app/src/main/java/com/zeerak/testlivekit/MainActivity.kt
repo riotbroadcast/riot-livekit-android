@@ -26,9 +26,9 @@ class MainActivity : AppCompatActivity(), RiotLiveKitManager.RoomListener {
         viewBinding= DataBindingUtil.setContentView(this,R.layout.activity_main);
 
         val riotManager = RiotLiveKitManager(this).init(
-            "wss://stephen-dzasntmt.livekit.cloud",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDY0NTQ2NzksImlzcyI6IkFQSUF6Rm52aG5GenZFZSIsIm5iZiI6MTcwNjM2NDY3OSwic3ViIjoiZGV2aWNlIiwidmlkZW8iOnsiY2FuUHVibGlzaCI6dHJ1ZSwiY2FuUHVibGlzaERhdGEiOnRydWUsImNhblN1YnNjcmliZSI6dHJ1ZSwicm9vbSI6ImR1bW15Iiwicm9vbUpvaW4iOnRydWV9fQ.r5kBBqvY8bxloIWTaIi6uRb2vTLpuPfKfkxXL7x3aAM",
-            )
+            "wss://demo-htzvtmdl.livekit.cloud",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTE5NTQ0MjIsImlzcyI6IkFQSWVkUWY3aUM3dHI0ayIsIm5iZiI6MTcxMTEzNDQyMiwic3ViIjoibGlzdGVuZXIiLCJ2aWRlbyI6eyJjYW5QdWJsaXNoIjp0cnVlLCJjYW5QdWJsaXNoRGF0YSI6dHJ1ZSwiY2FuU3Vic2NyaWJlIjp0cnVlLCJyb29tIjoiYmFzZW1lbnQiLCJyb29tSm9pbiI6dHJ1ZX19.-FBOlT0SV3XK2VdUFrREGnP6cC-ONvgIJE2XMfu1FXY",
+        )
 
 
         viewBinding.btnConnect.setOnClickListener {
@@ -55,8 +55,9 @@ class MainActivity : AppCompatActivity(), RiotLiveKitManager.RoomListener {
 
     override fun onConnected(room: Room) {
         viewBinding.tvRoomInfo.text = "${room.name}"
-        viewBinding.tvLocalParticipantInfo.text = "${room.localParticipant.toString()}"
-        viewBinding.tvRemoteParticipantInfo.text = "${room.remoteParticipants}"
+        viewBinding.tvLocalParticipantInfo.text = "${room.localParticipant.identity}"
+        viewBinding.tvRemoteParticipantInfo.text = "${room.remoteParticipants.values.first().identity}"
+
     }
 
     override fun onDisconnect(room: Room, error: Exception?) {

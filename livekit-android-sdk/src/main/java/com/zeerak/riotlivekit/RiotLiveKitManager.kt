@@ -1,13 +1,9 @@
 package com.zeerak.riotlivekit
 
 import android.content.Intent
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import io.livekit.android.ConnectOptions
 import io.livekit.android.LiveKit
 import io.livekit.android.room.Room
-import io.livekit.android.room.participant.Participant
 import io.livekit.android.room.participant.RemoteParticipant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,11 +17,7 @@ class RiotLiveKitManager(private var mContext: android.content.Context) {
     private var url: String? = null
     private var token: String? = null
     private var mPreferencesHelper: PreferencesHelper = PreferencesHelper(mContext)
-    private val mutableRoom = MutableLiveData<Room>()
-    // private val mutableRemoteParticipants = MutableLiveData<List<RemoteParticipant>>()
-
-    private val room: LiveData<Room> = mutableRoom
-    //private val remoteParticipants: LiveData<List<RemoteParticipant>> = mutableRemoteParticipants
+    private var mRoom : Room? = null
 
     fun init(url: String, token: String): RiotLiveKitManager {
         this.url = url
@@ -63,20 +55,20 @@ class RiotLiveKitManager(private var mContext: android.content.Context) {
     }
 
     fun disconnect() {
-        if (room.value?.state == Room.State.CONNECTED)
-            room.value?.disconnect()
+        if (mRoom?.state == Room.State.CONNECTED)
+            mRoom?.disconnect()
     }
 
     fun getCurrentState(): Room.State? {
-        return room.value?.state
+        return mRoom?.state
     }
 
     fun getLocalParticipantInfo(): LivekitModels.ParticipantInfo? {
-        return room.value?.localParticipant?.participantInfo
+        return mRoom?.localParticipant?.participantInfo
     }
 
     fun getRemoteParticipants(): Map<String, RemoteParticipant>? {
-        return room.value?.remoteParticipants
+        return mRoom?.remoteParticipants
     }
 
 
@@ -135,7 +127,7 @@ class RiotLiveKitManager(private var mContext: android.content.Context) {
             audioTrack.enabled = true
             videoTrack.enabled = false
             localParticipant.publishAudioTrack(audioTrack)
-            mutableRoom.value = room
+            mRoom = room
         } catch (e: Exception) {
             listener.onError(e)
         }
