@@ -66,12 +66,8 @@ class MainActivity : AppCompatActivity(), RiotLiveKitManager.RoomListener {
         viewBinding.tvRemoteParticipantInfo.text = "N/A"
     }
 
-    override fun onParticipantConnected(room: Room, participant: RemoteParticipant) {
-        Log.e("","")
-    }
+    override fun onParticipantConnected(room: Room, participant: RemoteParticipant) {}
 
-    override fun onParticipantDisconnected(room: Room, participant: RemoteParticipant) {
-        Log.e("","")
-    }
+    override fun onParticipantDisconnected(room: Room, participant: RemoteParticipant) {}
 }
 
