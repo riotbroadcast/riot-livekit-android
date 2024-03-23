@@ -36,7 +36,6 @@ class CallViewModel(
 
     init {
         viewModelScope.launch {
-            delay(600)
             try {
                 val room = LiveKit.connect(
                     application,
@@ -65,7 +64,6 @@ class CallViewModel(
                 (application as CallActivity).onBackPressed()
                 Toast.makeText(application, e.message, Toast.LENGTH_SHORT).show()
             }
-
 
         }
     }

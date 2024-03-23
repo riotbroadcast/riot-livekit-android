@@ -67,6 +67,8 @@ constructor(
     private var hasLostConnectivity: Boolean = false
     suspend fun connect(url: String, token: String, options: ConnectOptions?) {
         state = State.CONNECTING
+        listener?.onStateChanged(state)
+
         val response = engine.join(url, token, options)
         LKLog.i { "Connected to server, server version: ${response.serverVersion}, client version: ${Version.CLIENT_VERSION}" }
 
@@ -203,6 +205,7 @@ constructor(
         state = State.RECONNECTING
         engine.reconnect()
         listener?.onReconnecting(this)
+        listener?.onStateChanged(state)
     }
 
     private fun handleDisconnect() {
@@ -220,6 +223,7 @@ constructor(
         engine.close()
         state = State.DISCONNECTED
         listener?.onDisconnect(this, null)
+        listener?.onStateChanged(state)
         listener = null
     }
 
@@ -258,11 +262,15 @@ constructor(
     //----------------------------------- RTCEngine.Listener ------------------------------------//
     override fun onIceConnected() {
         state = State.CONNECTED
+        listener?.onConnected(this)
+        listener?.onStateChanged(state)
     }
 
     override fun onIceReconnected() {
         state = State.CONNECTED
         listener?.onReconnected(this)
+        listener?.onConnected(this)
+        listener?.onStateChanged(state)
     }
 
     /**
@@ -440,10 +448,17 @@ constructor(
  *
  */
 interface RoomListener {
+
+    //Todo: add State here
     /**
      * A network change has been detected and LiveKit attempts to reconnect to the room
      * When reconnect attempts succeed, the room state will be kept, including tracks that are subscribed/published
      */
+
+    fun onStateChanged(state : Room.State){}
+    fun onConnected(room: Room) {}
+
+
     fun onReconnecting(room: Room) {}
 
     /**
