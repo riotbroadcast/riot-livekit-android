@@ -1,18 +1,18 @@
 package com.zeerak.riotlivekit
 
-import android.app.Activity
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import io.livekit.android.ConnectOptions
 import io.livekit.android.LiveKit
 import io.livekit.android.room.Room
-import io.livekit.android.room.RoomListener
 import io.livekit.android.room.participant.Participant
 import io.livekit.android.room.participant.RemoteParticipant
-import org.webrtc.EglBase.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import livekit.LivekitModels
 import org.webrtc.audio.JavaAudioDeviceModule
 import kotlin.jvm.Throws
 
@@ -22,10 +22,10 @@ class RiotLiveKitManager(private var mContext: android.content.Context) {
     private var token: String? = null
     private var mPreferencesHelper: PreferencesHelper = PreferencesHelper(mContext)
     private val mutableRoom = MutableLiveData<Room>()
-    private val mutableRemoteParticipants = MutableLiveData<List<RemoteParticipant>>()
+    // private val mutableRemoteParticipants = MutableLiveData<List<RemoteParticipant>>()
 
-    val room: LiveData<Room> = mutableRoom
-    val remoteParticipants: LiveData<List<RemoteParticipant>> = mutableRemoteParticipants
+    private val room: LiveData<Room> = mutableRoom
+    //private val remoteParticipants: LiveData<List<RemoteParticipant>> = mutableRemoteParticipants
 
     fun init(url: String, token: String): RiotLiveKitManager {
         this.url = url
@@ -55,46 +55,76 @@ class RiotLiveKitManager(private var mContext: android.content.Context) {
     }
 
     @Throws
-    fun checkForValidUrlAndToken(){
+    fun checkForValidUrlAndToken() {
         when {
-            url.isNullOrBlank() -> throw Exception("URL is null, please provide valid url in init Method")
-            url.isNullOrBlank() -> throw Exception("Token is null, please provide valid token in init Method")
+            url.isNullOrBlank() -> throw Exception("URL is null, please provide valid url in init method")
+            url.isNullOrBlank() -> throw Exception("Token is null, please provide valid token in init method")
         }
     }
 
-    suspend fun connect(error: (exception: Exception) -> Unit, listener: RoomListener) {
-        checkForValidUrlAndToken()
+    fun disconnect() {
+        if (room.value?.state == Room.State.CONNECTED)
+            room.value?.disconnect()
+    }
 
+    fun getCurrentState(): Room.State? {
+        return room.value?.state
+    }
+
+    fun getLocalParticipantInfo(): LivekitModels.ParticipantInfo? {
+        return room.value?.localParticipant?.participantInfo
+    }
+
+    fun getRemoteParticipants(): Map<String, RemoteParticipant>? {
+        return room.value?.remoteParticipants
+    }
+
+
+    suspend fun connect(listener: RoomListener) {
         try {
+            checkForValidUrlAndToken()
             val room = LiveKit.connect(
                 mContext,
                 url!!,
                 token!!,
                 ConnectOptions(),
-                Listener(object : CustomRoomListener {
+                listener = object : io.livekit.android.room.RoomListener {
+                    override fun onStateChanged(state: Room.State) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            listener.onStateChanged(state)
+                        }
+                    }
+
+                    override fun onConnected(room: Room) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            listener.onConnected(room)
+                        }
+                    }
+
                     override fun onDisconnect(room: Room, error: Exception?) {
-                        mutableRoom.value?.disconnect()
-                        listener.onDisconnect(room, error)
+                        CoroutineScope(Dispatchers.Main).launch {
+                            listener.onDisconnect(room, error)
+                        }
                     }
 
                     override fun onParticipantConnected(
                         room: Room,
                         participant: RemoteParticipant
                     ) {
-                        updateParticipants(room)
-                        listener.onParticipantConnected(room, participant)
+                        CoroutineScope(Dispatchers.Main).launch {
+                            listener.onParticipantConnected(room, participant)
+                        }
                     }
 
                     override fun onParticipantDisconnected(
                         room: Room,
                         participant: RemoteParticipant
                     ) {
-                        updateParticipants(room)
-                        listener.onParticipantDisconnected(room, participant)
+                        CoroutineScope(Dispatchers.Main).launch {
+                            listener.onParticipantDisconnected(room, participant)
+                        }
                     }
-
                 })
-            )
 
             val localParticipant = room.localParticipant
             val audioTrack = localParticipant.createAudioTrack()
@@ -105,64 +135,18 @@ class RiotLiveKitManager(private var mContext: android.content.Context) {
             audioTrack.enabled = true
             videoTrack.enabled = false
             localParticipant.publishAudioTrack(audioTrack)
-
-            updateParticipants(room)
             mutableRoom.value = room
         } catch (e: Exception) {
-            error.invoke(e)
+            listener.onError(e)
         }
     }
 
-    fun updateParticipants(room: Room) {
-        mutableRemoteParticipants.postValue(
-            room.remoteParticipants
-                .keys
-                .sortedBy { it }
-                .mapNotNull { room.remoteParticipants[it] }
-        )
-    }
 
-    class Listener(private var customListener: CustomRoomListener) : RoomListener {
-        override fun onDisconnect(room: Room, error: Exception?) {
-            customListener.onDisconnect(room, error)
-            Log.i("LIVEKIT", error?.message.toString())
+    interface RoomListener {
 
-        }
-
-        override fun onParticipantConnected(
-            room: Room,
-            participant: RemoteParticipant
-        ) {
-            customListener.onParticipantConnected(room, participant)
-
-        }
-
-        override fun onParticipantDisconnected(
-            room: Room,
-            participant: RemoteParticipant
-        ) {
-            customListener.onParticipantDisconnected(room, participant)
-        }
-
-        override fun onFailedToConnect(room: Room, error: Exception) {
-            Log.i("LIVEKIT", error?.message.toString())
-        }
-
-        override fun onActiveSpeakersChanged(speakers: List<Participant>, room: Room) {
-            Log.i("LIVEKIT", "active speakers changed ${speakers.count()}")
-        }
-
-        override fun onMetadataChanged(
-            participant: Participant,
-            prevMetadata: String?,
-            room: Room
-        ) {
-            Log.i("LIVEKIT", "Participant metadata changed: ${participant.identity}")
-        }
-    }
-    /* */
-
-    interface CustomRoomListener {
+        fun onError(exception : Exception)
+        fun onStateChanged(state: Room.State)
+        fun onConnected(room: Room)
         fun onDisconnect(room: Room, error: Exception?)
         fun onParticipantConnected(
             room: Room,
